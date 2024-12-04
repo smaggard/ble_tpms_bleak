@@ -43,14 +43,14 @@ devices_dict = {
             "batt_canid": 0x1E206628,
             "location": "passenger_front"
             },
-        "F4:BC:DA:32:70:35": {
+        "F4:BC:DA:32:70:36": {
             "data": "000181EACA108A78E36D0000E60A00005B00", 
             "press_canid": 0x1E20A627, 
             "temp_canid": 0x1E21A627,
             "batt_canid": 0x1E20A628,
             "location": "driver_rear"
             },
-        "F4:BC:DA:32:70:35": {
+        "F4:BC:DA:32:70:37": {
             "data": "000181EACA108A78E36D0000E60A00005B00", 
             "press_canid": 0x1E20E627, 
             "temp_canid": 0x1E21E627,
@@ -139,12 +139,10 @@ async def main(devices_dict):
             else:
                 for key in data:
                     man_data = data[key].hex()
-                    print(man_data)
-                    print(len(man_data))
+                    #print(man_data)
+                    #print(len(man_data))
                     if len(man_data) == 30:
                         devices_dict[identity]["data"] = man_data
-                    else:
-                        next
                     # Get the proper bytes for each portion
                     pressure = devices_dict[identity]['data'][16:22]
                     temp = devices_dict[identity]['data'][24:28]
@@ -178,7 +176,7 @@ async def main(devices_dict):
                     send_msg(batt_msg)
                     
                     # Send Messages
-            print("End Run")
+            #print("End Run")
 
 if __name__ == "__main__":
     try:
