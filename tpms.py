@@ -5,6 +5,8 @@ import struct
 import can
 import os
 import sys
+import logging
+from systemd.journal import JournalHandler
 
 # Holley input can ids are as follows.
 # For pressure
@@ -57,6 +59,15 @@ devices_dict = {
             }
 }
 
+# Setup logging
+log = logging.getLogger('tpms')
+log.addHandler(JournalHandler())
+log.setLevel(logging.INFO)
+
+# Setup Can bus
+bus = can.interface.Bus(channel='can0', bustype='socketcan')
+
+# Start sub routines
 def hex2int(_HEX):
   _BIN=bytes.fromhex(_HEX)
   _Rev=_BIN[::-1]
@@ -144,9 +155,9 @@ async def main(devices_dict):
                     tempF = round((hex2int(temp)/100)*1.8 +32,2)
                     batt = hex2int(bat)
                     
-                    print(pressurePSI)
-                    print(tempF)
-                    print(batt)
+                    #print(pressurePSI)
+                    #print(tempF)
+                    #print(batt)
                     
                     # Remap to 5v for sending to Holley ECU
                     remapped_press = remap(pressurePSI, 0, 50, 0, 5)
@@ -159,16 +170,21 @@ async def main(devices_dict):
                     batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
 
                     # Send Messages
-                    #send_msg(press_msg)
-                    #send_msg(temp_msg)
-                    #send_msg(batt_msg)
+                    log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']}")
+                    send_msg(press_msg)
+                    log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']}")
+                    send_msg(temp_msg)
+                    log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']}")
+                    send_msg(batt_msg)
                     
                     # Send Messages
             print("End Run")
 
 if __name__ == "__main__":
     try:
+        log.info("Creating Can Bus Interface")
         bus = can.interface.Bus(channel='can0', bustype='socketcan')
+        log.info("Starting main application")
         asyncio.run(main(devices_dict))
 
     except KeyboardInterrupt:
