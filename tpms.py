@@ -65,7 +65,7 @@ log.addHandler(JournalHandler())
 log.setLevel(logging.INFO)
 
 # Setup Can bus
-bus = can.interface.Bus(channel='can0', bustype='socketcan')
+bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=True)
 
 # Start sub routines
 def hex2int(_HEX):
@@ -75,38 +75,12 @@ def hex2int(_HEX):
   return int(_HEX,16)
 
 def remap( x, oMin, oMax, nMin, nMax ):
-
-    #range check
-    if oMin == oMax:
-        print("Warning: Zero input range")
-        return None
-
-    if nMin == nMax:
-        print("Warning: Zero output range")
-        return None
-
-    #check reversed input range
-    reverseInput = False
     oldMin = min( oMin, oMax )
     oldMax = max( oMin, oMax )
-    if not oldMin == oMin:
-        reverseInput = True
-
-    #check reversed output range
-    reverseOutput = False   
     newMin = min( nMin, nMax )
     newMax = max( nMin, nMax )
-    if not newMin == nMin :
-        reverseOutput = True
-
     portion = (x-oldMin)*(newMax-newMin)/(oldMax-oldMin)
-    if reverseInput:
-        portion = (oldMax-x)*(newMax-newMin)/(oldMax-oldMin)
-
     result = portion + newMin
-    if reverseOutput:
-        result = newMax - portion
-
     return result
 
 def float_to_hex(f):
@@ -125,8 +99,23 @@ def send_msg(msg):
     try:
         bus.send(msg)
         return True
-    except:
-        return False
+    except Exception as e:
+        log.info(e)
+        # Bouncing Can network.
+        bounce_interface()
+
+def bounce_interface():
+    try:
+        log.info("Bouncing Can interface due to error")
+        os.system("ifdown can0")
+        os.system("ifup can0")
+        time.sleep(.5)
+        global bus 
+        bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=True)
+        #bus.flush_tx_buffer()
+        return True
+    except Exception as e:
+        log.info(e)
     
 async def main(devices_dict):
     while True:
@@ -168,11 +157,11 @@ async def main(devices_dict):
                     batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
 
                     # Send Messages
-                    log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']}")
+                    log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']} with voltage {remapped_press}")
                     send_msg(press_msg)
-                    log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']}")
+                    log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']} with voltage {remapped_temp}")
                     send_msg(temp_msg)
-                    log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']}")
+                    log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']} with voltage {remapped_batt}")
                     send_msg(batt_msg)
                     
                     # Send Messages
@@ -181,7 +170,7 @@ async def main(devices_dict):
 if __name__ == "__main__":
     try:
         log.info("Creating Can Bus Interface")
-        bus = can.interface.Bus(channel='can0', bustype='socketcan')
+        bus = can.interface.Bus(channel='can0', bustype='socketcan', receive_own_messages=True)
         log.info("Starting main application")
         asyncio.run(main(devices_dict))
 
