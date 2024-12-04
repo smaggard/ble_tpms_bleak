@@ -3,6 +3,8 @@ import time
 from bleak import BleakScanner
 import struct
 import can
+import os
+import sys
 
 # Holley input can ids are as follows.
 # For pressure
@@ -108,6 +110,13 @@ def create_can_message(canid,data):
 def create_dlc(x):
     return [int('0x'+x[2]+x[3], 16),int('0x'+x[4]+x[5], 16),int('0x'+x[6]+x[7], 16),int('0x'+x[8]+x[9], 16)]
 
+def send_msg(msg):
+    try:
+        bus.send(msg)
+        return True
+    except:
+        return False
+    
 async def main(devices_dict):
     while True:
         devices = await BleakScanner.discover(return_adv=True,timeout=4)
@@ -148,12 +157,18 @@ async def main(devices_dict):
                     press_msg = create_can_message(devices_dict[identity]["press_canid"],create_dlc(float_to_hex(remapped_press)))
                     temp_msg = create_can_message(devices_dict[identity]["temp_canid"],create_dlc(float_to_hex(remapped_temp)))
                     batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
+
+                    # Send Messages
+                    #send_msg(press_msg)
+                    #send_msg(temp_msg)
+                    #send_msg(batt_msg)
                     
                     # Send Messages
             print("End Run")
 
 if __name__ == "__main__":
     try:
+        bus = can.interface.Bus(channel='can0', bustype='socketcan')
         asyncio.run(main(devices_dict))
 
     except KeyboardInterrupt:
