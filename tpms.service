@@ -1,0 +1,14 @@
+[Unit]
+Description=TPMS-Can service
+After=network-target
+
+[Service]
+type=simple
+User=root
+WorkingDirectory=/opt/tpms
+Environment=/opt/tpms
+ExecStart=/opt/tpms/bin/python3 tpms.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
