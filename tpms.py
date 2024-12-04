@@ -4,21 +4,56 @@ from bleak import BleakScanner
 import struct
 import can
 
+# Holley input can ids are as follows.
+# For pressure
+# Can ID 1575
+# Input 1 = Driver Front
+# Input 2 = Passenger Front
+# Input 3 = Driver Rear
+# Input 4 = Passenger Rear
+# For Temperature
+# Can ID 1575
+# Input 5 = Driver Front
+# Input 6 = Passenger Front
+# Input 7 = Driver Rear
+# Input 8 = Passenger Rear
+# For Battery
+# Can ID 1576
+# Input 1 = Driver Front
+# Input 2 = Passenger Front
+# Input 3 = Driver Rear
+# Input 4 = Passenger Rear
+
 devices_dict = {
         "F4:BC:DA:32:70:35": {
             "data": "000181EACA108A78E36D0000E60A00005B00", 
             "press_canid": 0x1E202627, 
-            "temp_canid": "",
-            "batt_canid": "",
+            "temp_canid": 0x1E212627,
+            "batt_canid": 0x1E202628,
+            "location": "driver_front"
             },
         "F4:BC:DA:32:70:90": {
             "data": "000180EACA108A78E36D0000E60A00005B00", 
             "press_canid": 0x1E206627,
-            "temp_canid": "",
-            "batt_canid": ""
+            "temp_canid": 0x1E216627,
+            "batt_canid": 0x1E206628,
+            "location": "passenger_front"
             },
-    
-    }
+        "F4:BC:DA:32:70:35": {
+            "data": "000181EACA108A78E36D0000E60A00005B00", 
+            "press_canid": 0x1E20A627, 
+            "temp_canid": 0x1E21A627,
+            "batt_canid": 0x1E20A628,
+            "location": "driver_rear"
+            },
+        "F4:BC:DA:32:70:35": {
+            "data": "000181EACA108A78E36D0000E60A00005B00", 
+            "press_canid": 0x1E20E627, 
+            "temp_canid": 0x1E21E627,
+            "batt_canid": 0x1E20E628,
+            "location": "passenger_rear"
+            }
+}
 
 def hex2int(_HEX):
   _BIN=bytes.fromhex(_HEX)
