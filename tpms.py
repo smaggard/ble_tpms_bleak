@@ -29,29 +29,29 @@ from systemd.journal import JournalHandler
 # Input 4 = Passenger Rear
 
 devices_dict = {
-        "F4:BC:DA:32:70:35": {
-            "data": "000181EACA108A78E36D0000E60A00005B00", 
+        "80:EA:CA:50:2E:D8": {
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E202627, 
             "temp_canid": 0x1E212627,
             "batt_canid": 0x1E202628,
             "location": "driver_front"
             },
-        "F4:BC:DA:32:70:90": {
-            "data": "000180EACA108A78E36D0000E60A00005B00", 
+        "81:EA:CA:50:2E:61": {
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E206627,
             "temp_canid": 0x1E216627,
             "batt_canid": 0x1E206628,
             "location": "passenger_front"
             },
-        "F4:BC:DA:32:70:36": {
-            "data": "000181EACA108A78E36D0000E60A00005B00", 
+        "82:EA:CA:50:2D:18": {
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E20A627, 
             "temp_canid": 0x1E21A627,
             "batt_canid": 0x1E20A628,
             "location": "driver_rear"
             },
-        "F4:BC:DA:32:70:37": {
-            "data": "000181EACA108A78E36D0000E60A00005B00", 
+        "83:EA:CA:50:2D:34": {
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E20E627, 
             "temp_canid": 0x1E21E627,
             "batt_canid": 0x1E20E628,
@@ -130,12 +130,14 @@ async def main(devices_dict):
                     man_data = data[key].hex()
                     #print(man_data)
                     #print(len(man_data))
-                    if len(man_data) == 30:
+                    if len(man_data) == 32:
                         devices_dict[identity]["data"] = man_data
                     # Get the proper bytes for each portion
-                    pressure = devices_dict[identity]['data'][16:22]
-                    temp = devices_dict[identity]['data'][24:28]
-                    bat = devices_dict[identity]['data'][32:36]
+                    pressure = devices_dict[identity]['data'][12:18]
+                    print(pressure)
+                    print(devices_dict[identity]['data'])
+                    temp = devices_dict[identity]['data'][20:24]
+                    bat = devices_dict[identity]['data'][28:30]
                     
                     # Convert bytes into floats in proper format
                     pressurePSI = round((hex2int(pressure)/100000)*14.5037738,2)
