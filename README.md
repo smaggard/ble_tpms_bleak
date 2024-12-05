@@ -46,27 +46,29 @@ The inputs will be Pressure in PSI, Temperature in degrees F, and the Battery %
 Configure as CAN 5V Sensors with a Type of Custom 5v, the voltage scale will be 0-5v, and the Pressure scale will be 0-50PSI.
 Use the CAN IDs and input numbers from the list below.
 
-*Can I/O Module ID 1575
-** Input 1 = Driver Front
-** Input 2 = Passenger Front
-** Input 3 = Driver Rear
-** Input 4 = Passenger Rear
+* Can I/O Module ID 1575
+* Input 1 = Driver Front
+* Input 2 = Passenger Front
+* Input 3 = Driver Rear
+* Input 4 = Passenger Rear
 
 ### For Temperature
 Configure as CAN 5v Sensors with a Type of Custom 5V, the voltage scale will be 0-5V and the temperature scale will be 0-212 F.
 Use the CAN IDs and input numbers from the list below.
+
 * Can ID 1575
-** Input 5 = Driver Front
-** Input 6 = Passenger Front
-** Input 7 = Driver Rear
-** Input 8 = Passenger Rear
+* Input 5 = Driver Front
+* Input 6 = Passenger Front
+* Input 7 = Driver Rear
+* Input 8 = Passenger Rear
 
 ### For Battery
 Configure as CAN 5V Sensors with a Type of Custom 5V, the voltage scale will be 0-5V and the scale will be 0-100%.
 Use the CAN IDs and input numbers from the list below.
+
 * Can ID 1576
-** Input 1 = Driver Front
-** Input 2 = Passenger Front
-** Input 3 = Driver Rear
-** Input 4 = Passenger Rear
+* Input 1 = Driver Front
+* Input 2 = Passenger Front
+* Input 3 = Driver Rear
+* Input 4 = Passenger Rear
 
