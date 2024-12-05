@@ -32,28 +32,28 @@ from systemd.journal import JournalHandler
 # Each key should be the ID of the sensor in ##:##:##:##:##:## format.
 devices_dict = {
         "80:EA:CA:50:2E:D8": {
-            "data": "", 
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E202627, 
             "temp_canid": 0x1E212627,
             "batt_canid": 0x1E202628,
             "location": "driver_front"
             },
         "81:EA:CA:50:2E:61": {
-            "data": "", 
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E206627,
             "temp_canid": 0x1E216627,
             "batt_canid": 0x1E206628,
             "location": "passenger_front"
             },
         "82:EA:CA:50:2D:18": {
-            "data": "", 
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E20A627, 
             "temp_canid": 0x1E21A627,
             "batt_canid": 0x1E20A628,
             "location": "driver_rear"
             },
         "83:EA:CA:50:2D:34": {
-            "data": "", 
+            "data": "80eaca502ed8580903001c0700005f00", 
             "press_canid": 0x1E20E627, 
             "temp_canid": 0x1E21E627,
             "batt_canid": 0x1E20E628,
@@ -148,33 +148,34 @@ async def main(devices_dict):
                 man_data = data[0x0100].hex()
                 if len(man_data) == 32:
                     devices_dict[identity]["data"] = man_data
-                # Get the proper bytes for each portion
-                pressure = devices_dict[identity]['data'][12:18]
-                temp = devices_dict[identity]['data'][20:24]
-                bat = devices_dict[identity]['data'][28:30]
                     
-                # Convert bytes into floats in proper format
-                pressurePSI = round((hex2int(pressure)/100000)*14.5037738,2)
-                tempF = round((hex2int(temp)/100)*1.8 +32,2)
-                batt = hex2int(bat)
+            # Get the proper bytes for each portion
+            pressure = devices_dict[identity]['data'][12:18]
+            temp = devices_dict[identity]['data'][20:24]
+            bat = devices_dict[identity]['data'][28:30]
+                
+            # Convert bytes into floats in proper format
+            pressurePSI = round((hex2int(pressure)/100000)*14.5037738,2)
+            tempF = round((hex2int(temp)/100)*1.8 +32,2)
+            batt = hex2int(bat)
                     
-                # Remap to 5v for sending to Holley ECU
-                remapped_press = remap(pressurePSI, 0, 50, 0, 5)
-                remapped_temp = remap(tempF, 0, 212, 0, 5)
-                remapped_batt = remap(batt, 0, 100, 0, 5)
+            # Remap to 5v for sending to Holley ECU
+            remapped_press = remap(pressurePSI, 0, 50, 0, 5)
+            remapped_temp = remap(tempF, 0, 212, 0, 5)
+            remapped_batt = remap(batt, 0, 100, 0, 5)
                     
-                # Create Messages
-                press_msg = create_can_message(devices_dict[identity]["press_canid"],create_dlc(float_to_hex(remapped_press)))
-                temp_msg = create_can_message(devices_dict[identity]["temp_canid"],create_dlc(float_to_hex(remapped_temp)))
-                batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
+            # Create Messages
+            press_msg = create_can_message(devices_dict[identity]["press_canid"],create_dlc(float_to_hex(remapped_press)))
+            temp_msg = create_can_message(devices_dict[identity]["temp_canid"],create_dlc(float_to_hex(remapped_temp)))
+            batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
 
-                # Send Messages
-                log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']} with voltage {remapped_press}")
-                send_msg(press_msg)
-                log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']} with voltage {remapped_temp}")
-                send_msg(temp_msg)
-                log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']} with voltage {remapped_batt}")
-                send_msg(batt_msg)
+            # Send Messages
+            log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']} with voltage {remapped_press}")
+            send_msg(press_msg)
+            log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']} with voltage {remapped_temp}")
+            send_msg(temp_msg)
+            log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']} with voltage {remapped_batt}")
+            send_msg(batt_msg)
                     
 
 if __name__ == "__main__":
