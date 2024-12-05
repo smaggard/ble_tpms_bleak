@@ -76,6 +76,9 @@ def hex2int(_HEX):
   _HEX=_Rev.hex()
   return int(_HEX,16)
 
+def is_divisible_by_5(count):
+  return count % 5 == 0
+
 # Convert value to required scale
 def remap( x, oMin, oMax, nMin, nMax ):
     oldMin = min( oMin, oMax )
@@ -133,49 +136,53 @@ def bounce_interface():
 
 
 async def main(devices_dict):
+    count = 0
     while True:
-        # Scan bluetooth for 4 seconds
-        devices = await BleakScanner.discover(return_adv=True,timeout=4)
-        # Iterate over devices from scan looking for the known tpms sensors
-        for device in devices.values():
-            # Pull identity and data from device
-            identity = device[0].address
-            data = device[1].manufacturer_data
-            # If identity isn't a known sensor skip processing.
-            if identity not in devices_dict.keys():
-                continue
-            else:
-                man_data = data[0x0100].hex()
-                if len(man_data) == 32:
-                    devices_dict[identity]["data"] = man_data
-            for identity in devices_dict:        
-                # Get the proper bytes for each portion
-                pressure = devices_dict[identity]['data'][12:18]
-                temp = devices_dict[identity]['data'][20:24]
-                bat = devices_dict[identity]['data'][28:30]
-                
-                # Convert bytes into floats in proper format
-                pressurePSI = round((hex2int(pressure)/100000)*14.5037738,2)
-                tempF = round((hex2int(temp)/100)*1.8 +32,2)
-                batt = hex2int(bat)
+        if is_divisible_by_5(count):
+            # Scan bluetooth for 5 seconds
+            devices = await BleakScanner.discover(return_adv=True,timeout=5)
+            # Iterate over devices from scan looking for the known tpms sensors
+            for device in devices.values():
+                # Pull identity and data from device
+                identity = device[0].address
+                data = device[1].manufacturer_data
+                # If identity isn't a known sensor skip processing.
+                if identity not in devices_dict.keys():
+                    continue
+                else:
+                    man_data = data[0x0100].hex()
+                    if len(man_data) == 32:
+                        devices_dict[identity]["data"] = man_data
+        for identity in devices_dict:        
+            # Get the proper bytes for each portion
+            pressure = devices_dict[identity]['data'][12:18]
+            temp = devices_dict[identity]['data'][20:24]
+            bat = devices_dict[identity]['data'][28:30]
+            
+            # Convert bytes into floats in proper format
+            pressurePSI = round((hex2int(pressure)/100000)*14.5037738,2)
+            tempF = round((hex2int(temp)/100)*1.8 +32,2)
+            batt = hex2int(bat)
                     
-                # Remap to 5v for sending to Holley ECU
-                remapped_press = remap(pressurePSI, 0, 50, 0, 5)
-                remapped_temp = remap(tempF, 0, 212, 0, 5)
-                remapped_batt = remap(batt, 0, 100, 0, 5)
+            # Remap to 5v for sending to Holley ECU
+            remapped_press = remap(pressurePSI, 0, 50, 0, 5)
+            remapped_temp = remap(tempF, 0, 212, 0, 5)
+            remapped_batt = remap(batt, 0, 100, 0, 5)
                     
-                # Create Messages
-                press_msg = create_can_message(devices_dict[identity]["press_canid"],create_dlc(float_to_hex(remapped_press)))
-                temp_msg = create_can_message(devices_dict[identity]["temp_canid"],create_dlc(float_to_hex(remapped_temp)))
-                batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
+            # Create Messages
+            press_msg = create_can_message(devices_dict[identity]["press_canid"],create_dlc(float_to_hex(remapped_press)))
+            temp_msg = create_can_message(devices_dict[identity]["temp_canid"],create_dlc(float_to_hex(remapped_temp)))
+            batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
 
-                # Send Messages
-                log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']} with voltage {remapped_press}")
-                send_msg(press_msg)
-                log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']} with voltage {remapped_temp}")
-                send_msg(temp_msg)
-                log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']} with voltage {remapped_batt}")
-                send_msg(batt_msg)
+            # Send Messages
+            log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']} with voltage {remapped_press}")
+            send_msg(press_msg)
+            log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']} with voltage {remapped_temp}")
+            send_msg(temp_msg)
+            log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']} with voltage {remapped_batt}")
+            send_msg(batt_msg)
+            count = count+1
+            time.sleep(1)
                     
 
 if __name__ == "__main__":
