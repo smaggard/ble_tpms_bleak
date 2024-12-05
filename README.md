@@ -4,6 +4,9 @@ TPMS system that will send messages to a Holley Terminator X or Dominator as a C
 This application is written to be ran on a Raspberry Pi (Pi4 8GB used for Testing), along with 
 CAN Hat https://www.amazon.com/gp/product/B07VMB1ZKH and TPMS sensors https://www.amazon.com/dp/B0DBPLD1MQ
 
+You will need to configure the CAN interface as can0 with a speed if 1mb, and make it start on boot,
+there are several tutorials on how to do this on the internet, and also configure the Pi boot config per instructions
+
 After installing the sensors on the tires you will directly after need to run the following command on the 
 raspberry pi in close proximity to the car.
 ```
