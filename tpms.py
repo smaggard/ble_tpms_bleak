@@ -1,6 +1,8 @@
 import asyncio
 import time
 from bleak import BleakScanner
+from bleak.backends.scanner import AdvertisementData
+from bleak.backends.device import BLEDevice
 import struct
 import can
 import os
@@ -140,6 +142,7 @@ async def main(devices_dict):
     while True:
         if is_divisible_by_5(count):
             # Scan bluetooth for 5 seconds
+            log.info("Scanning bluetooth to update values")
             devices = await BleakScanner.discover(return_adv=True,timeout=5)
             # Iterate over devices from scan looking for the known tpms sensors
             for device in devices.values():
@@ -153,6 +156,7 @@ async def main(devices_dict):
                     man_data = data[0x0100].hex()
                     if len(man_data) == 32:
                         devices_dict[identity]["data"] = man_data
+        
         for identity in devices_dict:        
             # Get the proper bytes for each portion
             pressure = devices_dict[identity]['data'][12:18]
@@ -175,25 +179,23 @@ async def main(devices_dict):
             batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
 
             # Send Messages
-            log.info(f"Sending Pressure {pressurePSI} for device {devices_dict[identity]['location']} with voltage {remapped_press}")
+            log.info(f"Sending {devices_dict[identity]['location']}: Pressure {pressurePSI}, Temperature {tempF}, Battery % {batt}")
             send_msg(press_msg)
-            log.info(f"Sending Temperature {tempF} for device {devices_dict[identity]['location']} with voltage {remapped_temp}")
             send_msg(temp_msg)
-            log.info(f"Sending Battery percentage {batt} for device {devices_dict[identity]['location']} with voltage {remapped_batt}")
             send_msg(batt_msg)
+            # Increment count
             count = count+1
+            # Sleep 1
             time.sleep(1)
                     
 
 if __name__ == "__main__":
     try:
-        log.info("Creating Can Bus Interface")
-        bus = can.interface.Bus(channel='can0', bustype='socketcan', receive_own_messages=True)
         log.info("Starting main application")
         asyncio.run(main(devices_dict))
 
     except KeyboardInterrupt:
-        print('Interrupted')
+        log.info('Interrupted')
         try:
             sys.exit(130)
         except SystemExit:
