@@ -1,10 +1,10 @@
 import asyncio
-import can
 import logging
 import os
 import struct
 import sys
 import time
+import can
 from bleak import BleakScanner
 from systemd.journal import JournalHandler
 
@@ -71,11 +71,11 @@ log.setLevel(logging.INFO)
 bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=True)
 
 # Start sub routines
-def hex2int(_HEX):
-    _BIN=bytes.fromhex(_HEX)
-    _Rev=_BIN[::-1]
-    _HEX=_Rev.hex()
-    return int(_HEX,16)
+def hex2int(_hex):
+    _bin=bytes.fromhex(_hex)
+    _rev=_bin[::-1]
+    _hex=_rev.hex()
+    return int(_hex,16)
 
 def is_divisible_by_5(count):
     return count % 5 == 0
@@ -156,18 +156,18 @@ async def main(devices_dict):
                     man_data = data[0x0100].hex()
                     if len(man_data) == 32:
                         devices_dict[identity]["data"] = man_data
-        
-        for identity in devices_dict:        
+
+        for identity in devices_dict:
             # Get the proper bytes for each portion
             pressure = devices_dict[identity]['data'][12:18]
             temp = devices_dict[identity]['data'][20:24]
             bat = devices_dict[identity]['data'][28:30]
-            
+
             # Convert bytes into floats in proper format
             pressurePSI = round((hex2int(pressure)/100000)*14.5037738,2)
             tempF = round((hex2int(temp)/100)*1.8 +32,2)
             batt = hex2int(bat)
-                    
+
             # Remap to 5v for sending to Holley ECU
             remapped_press = remap(pressurePSI, 0, 50, 0, 5)
             remapped_temp = remap(tempF, 0, 212, 0, 5)
@@ -182,7 +182,8 @@ async def main(devices_dict):
                                           create_dlc(float_to_hex(remapped_batt)))
 
             # Send Messages
-            log.info(f"Sending {devices_dict[identity]['location']}: Pressure {pressurePSI}, Temperature {tempF}, Battery % {batt}")
+            log.info(f"""Sending {devices_dict[identity]['location']}: 
+                     Pressure {pressurePSI}, Temperature {tempF}, Battery % {batt}""")
             send_msg(press_msg)
             send_msg(temp_msg)
             send_msg(batt_msg)
@@ -190,7 +191,7 @@ async def main(devices_dict):
             count = count+1
             # Sleep 1
             time.sleep(1)
-                    
+
 
 if __name__ == "__main__":
     try:
