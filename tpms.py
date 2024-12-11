@@ -114,7 +114,7 @@ def send_msg(msg):
     try:
         bus.send(msg)
         return True
-    except Exception as e:
+    except can.exceptions.CanOperationError as e:
         log.error(e)
         # Bouncing Can network.
         bounce_interface()
@@ -122,6 +122,8 @@ def send_msg(msg):
 
 # Bounce Interfaces
 def bounce_interface():
+    # pylint: disable=global-statement
+    # pylint: broad-exception-caught
     try:
         # Log bounce
         log.error("Bouncing Can interface due to error")
@@ -140,9 +142,8 @@ def bounce_interface():
 
 
 async def main(devices_dict):
-    # pylint: disable=redefined-local-name
-    # pylint: disable=global-statement
-    # pylint: disable=too-man-locals
+    # pylint: disable=redefined-outer-name
+    # pylint: disable=too-many-locals
     # pylint: disable=logging-fstring-interpolation
     count = 0
     while True:
