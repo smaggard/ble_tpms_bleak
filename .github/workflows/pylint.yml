@@ -16,11 +16,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        apt install python3-systemd
         python -m pip install --upgrade pip
         pip install pylint
         pip install bleak
         pip install python-can
-        pip install 'git+https://github.com/systemd/python-systemd.git#egg=systemd-python'
+        # pip install 'git+https://github.com/systemd/python-systemd.git#egg=systemd-python'
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
