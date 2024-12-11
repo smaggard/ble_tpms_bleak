@@ -118,6 +118,7 @@ def send_msg(msg):
         log.error(e)
         # Bouncing Can network.
         bounce_interface()
+        return False
 
 # Bounce Interfaces
 def bounce_interface():
@@ -134,6 +135,7 @@ def bounce_interface():
         return True
     except Exception as e:
         log.error(e)
+        return False
 # End sub ruitines
 
 
@@ -151,7 +153,7 @@ async def main(devices_dict):
                 data = device[1].manufacturer_data
                 # If identity isn't a known sensor skip processing.
                 if identity not in devices_dict.keys():
-                    continue
+                    pass
                 else:
                     man_data = data[0x0100].hex()
                     if len(man_data) == 32:
@@ -164,15 +166,15 @@ async def main(devices_dict):
             bat = devices_dict[identity]['data'][28:30]
 
             # Convert bytes into floats in proper format
-            pressurePSI = round((hex2int(pressure)/100000)*14.5037738,2)
-            tempF = round((hex2int(temp)/100)*1.8 +32,2)
+            pressures_psi = round((hex2int(pressure)/100000)*14.5037738,2)
+            temp_f = round((hex2int(temp)/100)*1.8 +32,2)
             batt = hex2int(bat)
 
             # Remap to 5v for sending to Holley ECU
-            remapped_press = remap(pressurePSI, 0, 50, 0, 5)
-            remapped_temp = remap(tempF, 0, 212, 0, 5)
+            remapped_press = remap(pressures_psi, 0, 50, 0, 5)
+            remapped_temp = remap(temp_f, 0, 212, 0, 5)
             remapped_batt = remap(batt, 0, 100, 0, 5)
-                    
+
             # Create Messages
             press_msg = create_can_message(devices_dict[identity]["press_canid"],
                                            create_dlc(float_to_hex(remapped_press)))
@@ -182,8 +184,8 @@ async def main(devices_dict):
                                           create_dlc(float_to_hex(remapped_batt)))
 
             # Send Messages
-            log.info(f"""Sending {devices_dict[identity]['location']}: 
-                     Pressure {pressurePSI}, Temperature {tempF}, Battery % {batt}""")
+            log.info(f"""Sending {devices_dict[identity]['location']}:
+                     Pressure {pressures_psi}, Temperature {temp_f}, Battery % {batt}""")
             send_msg(press_msg)
             send_msg(temp_msg)
             send_msg(batt_msg)
