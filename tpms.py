@@ -1,3 +1,8 @@
+""" Application to pull the Pressure, temperature and battery
+Levels from Bluetooth TPMS sensors located on cars tires
+and send the values to a Holley Terminator X or dominator.
+"""
+# pylint disable=import-error
 import asyncio
 import logging
 import os
@@ -72,16 +77,44 @@ bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messa
 
 # Start sub routines
 def hex2int(_hex):
+    """ Cover a hex into an int
+    
+    Keyword arguments:
+    _hex (bytes): A hex number you need converted to an integer
+
+    Returns:
+    int(int): the Hex converted to base16
+    """
     _bin=bytes.fromhex(_hex)
     _rev=_bin[::-1]
     _hex=_rev.hex()
     return int(_hex,16)
 
 def is_divisible_by_5(count):
+    """ Check if number is divisible by 5
+    
+    Keyword arguments:
+    count(int): A number to check if divisible by 5
+
+    Returns:
+    (bool): Is/Is Not divisible
+    """
     return count % 5 == 0
 
 # Convert value to required scale
 def remap( x, omin, omax, nmin, nmax ):
+    """ Scale a float from one scale to another
+    
+    Keyword arguments:
+    x(float): Number to Scale
+    omin(float): Old Minimum
+    omax(float): Old Maximum
+    nmin(float): New Minimum
+    nmax(float): New Maximum
+
+    Returns:
+    (float) -- rescaled float value
+    """
     old_min = min( omin, omax )
     old_max = max( omin, omax )
     new_min = min( nmin, nmax )
@@ -92,25 +125,66 @@ def remap( x, omin, omax, nmin, nmax ):
 
 # Convert floating point to hex.
 def float_to_hex(f):
+    """ Convert a float to a hex number
+    
+    Keyword arguments:
+    f(float): Number to covert
+
+    Returns:
+    (hex) -- Converted value
+    """
     return hex(struct.unpack('<I', struct.pack('<f', f))[0])
 
 # Convert a Hex Value to floating point.
 def hex_to_float(f):
+    """ Convert a Hex to a float value
+    
+    Keyword arguments:
+    f(bytes): Number to covert
+
+    Returns:
+    (float) -- Converted value
+    """
     return struct.unpack('!f',bytes.fromhex(f))[0]
 
 # Create Can message
 def create_can_message(canid,data):
+    """ Convert a float to a hex number
+    
+    Keyword arguments:
+    canid(int): Can id to send message to.
+    data(bytearray): Data to send
+
+    Returns:
+    (can.Message) -- Can message to send
+    """
     # Form CAN message.
     return can.Message(arbitration_id=canid,data=data, is_extended_id=True)
 
 # Convert hex string into a byte array for use in a CAN message
 def create_dlc(x):
+    """ Create a 4 Byte data packet to send across the can bus.
+    
+    Keyword arguments:
+    x(str): Message to convert
+    
+    Returns:
+    (bytearray): A byte array representation of the DLC
+    """
     # Create byte array from string
     return [int('0x'+x[2]+x[3], 16),int('0x'+x[4]+x[5], 16),
             int('0x'+x[6]+x[7], 16),int('0x'+x[8]+x[9], 16)]
 
 # Send CAN message and bounce interface if it fails
 def send_msg(msg):
+    """ Send Can message
+    
+    Keyword arguments:
+    msg(can.Message): Can message to send
+    
+    Returns:
+    (bool)
+    """
     try:
         bus.send(msg)
         return True
@@ -122,8 +196,9 @@ def send_msg(msg):
 
 # Bounce Interfaces
 def bounce_interface():
+    """Bounce CAN interface"""
     # pylint: disable=global-statement
-    # pylint: broad-exception-caught
+    # pylint: disable=broad-exception-caught
     try:
         # Log bounce
         log.error("Bouncing Can interface due to error")
@@ -142,6 +217,13 @@ def bounce_interface():
 
 
 async def main(devices_dict):
+    """ Main subroutine, Scans bluetooth ever 10 seconds and sends can messages every second
+    
+        Keyword arguments:
+        devices_dict(dict): Dictionary of devices to scan for and decipher
+
+        Returns: None
+    """
     # pylint: disable=redefined-outer-name
     # pylint: disable=too-many-locals
     # pylint: disable=logging-fstring-interpolation
