@@ -140,6 +140,10 @@ def bounce_interface():
 
 
 async def main(devices_dict):
+    # pylint: disable=redefined-local-name
+    # pylint: disable=global-statement
+    # pylint: disable=too-man-locals
+    # pylint: disable=logging-fstring-interpolation
     count = 0
     while True:
         if is_divisible_by_5(count):

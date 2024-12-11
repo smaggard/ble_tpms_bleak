@@ -20,7 +20,7 @@ jobs:
         pip install pylint
         pip install bleak
         pip install python-can
-        pip install python-systemd
+        pip install python3-systemd
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
