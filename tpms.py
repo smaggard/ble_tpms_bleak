@@ -10,7 +10,7 @@ import sys
 import time
 import can
 from bleak import BleakScanner
-from systemd.journal import JournalHandler 
+from systemd.journal import JournalHandler # pylint: disable=import-error
 
 # Holley input can ids are as follows.
 # For pressure
