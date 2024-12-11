@@ -1,13 +1,11 @@
 import asyncio
+import can
+import logging
+import os
+import struct
+import sys
 import time
 from bleak import BleakScanner
-from bleak.backends.scanner import AdvertisementData
-from bleak.backends.device import BLEDevice
-import struct
-import can
-import os
-import sys
-import logging
 from systemd.journal import JournalHandler
 
 # Holley input can ids are as follows.
@@ -22,6 +20,7 @@ from systemd.journal import JournalHandler
 # Input 5 = Driver Front
 # Input 6 = Passenger Front
 # Input 7 = Driver Rear
+
 # Input 8 = Passenger Rear
 # For Battery
 # Can ID 1576
@@ -73,22 +72,22 @@ bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messa
 
 # Start sub routines
 def hex2int(_HEX):
-  _BIN=bytes.fromhex(_HEX)
-  _Rev=_BIN[::-1]
-  _HEX=_Rev.hex()
-  return int(_HEX,16)
+    _BIN=bytes.fromhex(_HEX)
+    _Rev=_BIN[::-1]
+    _HEX=_Rev.hex()
+    return int(_HEX,16)
 
 def is_divisible_by_5(count):
-  return count % 5 == 0
+    return count % 5 == 0
 
 # Convert value to required scale
-def remap( x, oMin, oMax, nMin, nMax ):
-    oldMin = min( oMin, oMax )
-    oldMax = max( oMin, oMax )
-    newMin = min( nMin, nMax )
-    newMax = max( nMin, nMax )
-    portion = (x-oldMin)*(newMax-newMin)/(oldMax-oldMin)
-    result = portion + newMin
+def remap( x, omin, omax, nmin, nmax ):
+    old_min = min( omin, omax )
+    old_max = max( omin, omax )
+    new_min = min( nmin, nmax )
+    new_max = max( nmin, nmax )
+    portion = (x-old_min)*(new_max-new_min)/(old_max-old_min)
+    result = portion + new_min
     return result
 
 # Convert floating point to hex.
@@ -101,13 +100,14 @@ def hex_to_float(f):
 
 # Create Can message
 def create_can_message(canid,data):
-    # Form CAN message 
+    # Form CAN message.
     return can.Message(arbitration_id=canid,data=data, is_extended_id=True)
 
 # Convert hex string into a byte array for use in a CAN message
 def create_dlc(x):
     # Create byte array from string
-    return [int('0x'+x[2]+x[3], 16),int('0x'+x[4]+x[5], 16),int('0x'+x[6]+x[7], 16),int('0x'+x[8]+x[9], 16)]
+    return [int('0x'+x[2]+x[3], 16),int('0x'+x[4]+x[5], 16),
+            int('0x'+x[6]+x[7], 16),int('0x'+x[8]+x[9], 16)]
 
 # Send CAN message and bounce interface if it fails
 def send_msg(msg):
@@ -129,7 +129,7 @@ def bounce_interface():
         os.system("ifup can0")
         time.sleep(.5)
         # Recreate bus
-        global bus 
+        global bus
         bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=True)
         return True
     except Exception as e:
@@ -174,9 +174,12 @@ async def main(devices_dict):
             remapped_batt = remap(batt, 0, 100, 0, 5)
                     
             # Create Messages
-            press_msg = create_can_message(devices_dict[identity]["press_canid"],create_dlc(float_to_hex(remapped_press)))
-            temp_msg = create_can_message(devices_dict[identity]["temp_canid"],create_dlc(float_to_hex(remapped_temp)))
-            batt_msg = create_can_message(devices_dict[identity]["batt_canid"],create_dlc(float_to_hex(remapped_batt)))
+            press_msg = create_can_message(devices_dict[identity]["press_canid"],
+                                           create_dlc(float_to_hex(remapped_press)))
+            temp_msg = create_can_message(devices_dict[identity]["temp_canid"],
+                                          create_dlc(float_to_hex(remapped_temp)))
+            batt_msg = create_can_message(devices_dict[identity]["batt_canid"],
+                                          create_dlc(float_to_hex(remapped_batt)))
 
             # Send Messages
             log.info(f"Sending {devices_dict[identity]['location']}: Pressure {pressurePSI}, Temperature {tempF}, Battery % {batt}")
