@@ -2,7 +2,6 @@
 Levels from Bluetooth TPMS sensors located on cars tires
 and send the values to a Holley Terminator X or dominator.
 """
-# pylint disable=import-error
 import asyncio
 import logging
 import os
@@ -11,7 +10,7 @@ import sys
 import time
 import can
 from bleak import BleakScanner
-from systemd.journal import JournalHandler
+from systemd.journal import JournalHandler 
 
 # Holley input can ids are as follows.
 # For pressure
@@ -25,7 +24,6 @@ from systemd.journal import JournalHandler
 # Input 5 = Driver Front
 # Input 6 = Passenger Front
 # Input 7 = Driver Rear
-
 # Input 8 = Passenger Rear
 # For Battery
 # Can ID 1576
